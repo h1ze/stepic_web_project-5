@@ -1,5 +1,5 @@
 # sudo apt-get update
-# sudo apt-get install -y nginx
+sudo apt-get install -y nginx
 # mkdir -p /home/box/web/public/{img,css,js}
 # mkdir -p /home/box/web/{uploads,etc}
 
