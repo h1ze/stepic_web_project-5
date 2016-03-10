@@ -1,18 +1,14 @@
-def application(environ, start_response):
-    """Simplest possible application object"""
+def wsgi_app(env, start_response):
 
 
+  status = '200 OK'
+  header = [('Content-Type', 'text/plain')]
 
-    resp = environ['QUERY_STRING'].split("&")
-    resp = environ['QUERY_STRING'].replace("&","\n")
-    resp = resp+"\r\n"
+  body = []
+  for key in env['QUERY_STRING'].split('&'):
+    data = key + "\n"
+    body.append(data)
 
-    status = '200 OK'
-    response_headers = [
-        ('Content-Type','text/plain'),
-        ('Content-Length', str(len(resp)))
-    ]
-    start_response(status, response_headers)
-    # resp = [item+"\r\n" for item in resp]
-    # return iter([data])
-    return resp
+
+  start_response(status, header)
+  return body

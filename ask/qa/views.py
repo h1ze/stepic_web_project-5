@@ -1,7 +1,6 @@
 from django.shortcuts import render
+from django.http import HttpResponse, Http404
 
-
-# Create your views here.
-from django.http import HttpResponse
 def test(request, *args, **kwargs):
-    return HttpResponse('OK')
+  return HttpResponse('OK')
+  # return render(request, "base.html")
