@@ -1,0 +1,158 @@
+git clone https://github.com/avs-soft/stepic-web.git /home/box/web
+bash /home/box/web/init-mysql.sh
+bash /home/box/web/init.sh
+
+
+git push
+git config --global credential.helper store
+
+
+
+
+
+#installed for django
+sudo apt-get install python-mysqldb
+
+#на всякий случай поставил и это
+apt-get install libmysqlclient-dev
+apt-get install python-dev
+
+
+
+
+#check if it works
+ps -o pid,euser,egroup,comm,args -C nginx
+
+
+
+А вообще, там по умолчанию вот такое стоит:
+$ django-admin --version
+1.6.1
+$ python --version
+Python 2.7.6
+$ gunicorn --version
+gunicorn (version 17.5)
+$ nginx -version
+nginx version: nginx/1.4.6 (Ubuntu)
+
+
+
+ Логи можно поизучать:
+   /var/log/nginx/
+   /var/log/gunicorn/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+http://127.0.0.1/hello/?a=1&a=2&b=3
+http://127.0.0.1:8080/?a=1&a=2&b=3
+http://0.0.0.0:8080/?a=1&a=2&b=3
+!!!!!!!!!!!!!!!
+В частности, при отладке, не мог сначала понять почему curl http://address:port/?a=1 выполняется нормально, а curl http://address:port/?a=1&b=2 выводит какую-то ерунду (как будто два запроса), оказалось нужно писать в кавычках: curl "http://address:port/?a=1&b=2".
+
+
+
+
+
+
+
+
+
+
+
+
+
+#git setup
+echo "# stepic-web" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git remote add origin https://github.com/avs-soft/stepic-web.git
+git push -u origin master
+
+
+
+
+
+
+"\r\n".join(environ['QUERY_STRING'].split("&")) 
+
+@Андрей_Гончаров да и в задании ошибка: Конфиг разместить в файле /home/box/web/etc/gunicorn.conf и подключите его с помощью символической ссылки /etc/gunicorn.d/test, а приложение должно лежать в /home/box/web/hello.py - тут все правильно.
+
+CONFIG = {
+    'mode': 'wsgi',
+    'working_dir': '/home/box/web',
+    # 'python': '/usr/bin/python',
+    'args': (
+        '--bind=0.0.0.0:8080',
+        '--daemon',
+        '--workers=2',
+        '--timeout=60',
+        'hello:app',
+    ),
+}
+
+ во время запуска gunicorn'а надо находится в папке с питон приложением, все!
+доп: если хотите перезапустить gunicorn: sudo ps aux ﻿| grep gunicorn, ﻿и стопаете первый по порядку процесс, например: ﻿kill 33, где 33 - pid процесса﻿
+
+
+
+
+
+Failed test #2. Invalid Server header received from gunicorn
+Кто-нибудь сталкивался? Не могу побороть и не знаю, как подступиться, куда копать и как проверять. Причем требуемая функциональность присутствует: на  curl "http://127.0.0.1/hello/?x=1&y=2&z=3" все четенько раскладывает, так же , как и на 8080.   Приложение выглядит:
+
+ def app (environ, start_response):
+  status = '200 OK'
+  response_headers = [('Content-type','text/plain')]
+  start_response(status, response_headers)
+  resp = environ['QUERY_STRING'].split("&")
+  resp = [item+"\r\n" for item in resp]
+  return resp
+ 
+На всякий случай ставил всякие заголовки в конфиге nginx на высший уровень:
+
+proxy_set_header Host $host;
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+proxy_set_header X-Real-IP $remote_addr;
+
+Сама схема проброса такова : nginx ловит на 8080-ый порт и отслеживает /hello/, и передает на 0.0.0.0:8000 , ﻿gunicorn, ﻿соответственно забинден тоже на 8000-ый порт. ﻿ ﻿﻿Может здесь что-то не то, но на одном порту(8080) они работать не хотят. ﻿ ﻿ ﻿
+
+Кстати, с конфигом  /etc/gunicorn.d/wsgi.example особых проблем не было, хотя грешил в том числе и на него, пока не начал ﻿тестировать только gunicorn﻿, ﻿без nginx. Хотя поначалу может быть проще тестировать его запуском из папки с приложением: 
+
+﻿gunicorn -b 0.0.0.0:8080 hello:app﻿
+ а уже потом перейти на конфиг, когда будет видно, что и ﻿зеленорог и приложение работают.
+
+
+
+
+
+
+
+

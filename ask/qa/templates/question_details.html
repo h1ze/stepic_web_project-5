@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>stepic-web Question</title>
+        <meta http-equiv=”Content-Type” content=”text/html; charset=utf-8”>
+        <meta name=”description” content=”Сайт”>
+        <link rel=”stylesheet” href=”./style.css”>
+    </head>
+    <body id=”the_body”>
+        <h1>{{ question.title }}</h1>
+        <p>{{ question.text }}</p>
+        <hr></hr>
+        {% for answer in answers %}
+            <p>{{ answer.text }}</p>
+        {% endfor %}
+    </body>
+</html>

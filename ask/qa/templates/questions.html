@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{webpage_title}}</title>
+        <meta http-equiv=”Content-Type” content=”text/html; charset=utf-8”>
+        <meta name=”description” content=”Сайт”>
+        <link rel=”stylesheet” href=”./style.css”>
+    </head>
+    <body id=”the_body”>
+        {% for question in page.object_list %}
+            <a href="{{ question.get_url }}">{{ question }}</a>
+        {% endfor %}
+        <hr></hr>
+        <nav>
+        {% for p in page.paginator.page_range %}
+            <a href="{{ baseurl }}{{ p }}">
+            {% if p == page.number %}
+                <b>{{ p }}</b>
+            {% else %}
+                {{ p }}
+            {% endif %}
+            </a>
+        {% endfor %}
+        </nav>        
+    </body>
+</html>
