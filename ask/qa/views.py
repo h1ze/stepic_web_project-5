@@ -1,128 +1,83 @@
-try:
-    from urllib.parse import urlencode
-except ImportError:
-    from urllib import urlencode
-
 from django.shortcuts import render, get_object_or_404
+from django.http import HttpResponse, HttpResponseRedirect
 from django.core.paginator import Paginator, EmptyPage
-from django.core.urlresolvers import reverse, NoReverseMatch
-from django.http import Http404, HttpResponseRedirect
 from django.contrib import auth
-from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+from qa.models import Question, Answer
+from qa.forms import AskForm, AnswerForm, SignupForm, LoginForm
 
-try:
-    from stepic_web.ask.qa.models import Question, Answer
-    from stepic_web.ask.qa.forms import AskForm, AnswerForm, SignupForm, LoginForm
-except ImportError:
-    import sys
-    sys.path.append("/home/box")
-    from web.ask.qa.models import Question, Answer
-    from web.ask.qa.forms import AskForm, AnswerForm, SignupForm, LoginForm
-
-LIMIT = 10
-
-
-def panginate(request, qs):
+def paginate(request, qs):
     try:
-        page_num = int(request.GET.get("page", 1))
+        limit = int(request.GET.get('limit', 10))
+    except ValueError:
+        limit = 10
+    if limit > 100:
+        limit = 10
+    try:
+        page = int(request.GET.get('page', 1))
     except ValueError:
         raise Http404
-
-    paginator = Paginator(qs, LIMIT)
-
+    paginator = Paginator(qs, limit)
     try:
-        page = paginator.page(page_num)
+        page = paginator.page(page)
     except EmptyPage:
         page = paginator.page(paginator.num_pages)
-    return page_num, page
-
-
-def build_url(name, url_params):
-    try:
-        url = reverse(name)
-    except NoReverseMatch:
-        url = name
-
-    if url_params:
-        url += '?' + urlencode(url_params)
-    return url
-
-
-def get_questions(request, question_type):
-    new_questions = Question.objects.get_questions_by_type(question_type)
-    page_num, page = panginate(request, new_questions)
-
-    next_page_ref = build_url(question_type, {"page": page_num+1}) if page.has_next() else request.path
-    prev_page_ref = build_url(question_type, {"page": page_num-1}) if page.has_previous() else request.path
-
-    return render(request, "question_list.html", {"questions": page.object_list, "next_page_ref": next_page_ref,
-                                                  "prev_page_ref": prev_page_ref})
-
-
-#@login_required
-def get_current_question(request, question_id):
-    question = get_object_or_404(Question, id=question_id)
-
-    user = request.user
-    if request.method == "POST":
-        text = request.POST["text"]
-        question = request.POST["question"]
-        form = AnswerForm(user, text=text, question=question)
+    return page
+def test(request, *args, **kwargs):
+    return HttpResponse('OK')
+def new_questions(request):
+    qs = Question.objects.new()
+    page = paginate(request, qs)
+    return render(request, 'list.html', { 'page': page, 'title': 'new questions' })
+def popular_questions(request):
+    qs = Question.objects.popular()
+    page = paginate(request, qs)
+    return render(request, 'list.html', { 'page': page, 'title': 'popular questions' })
+def one_question(request, id):
+    question = get_object_or_404(Question, pk=id)
+    qs = question.answer_set.all()
+    page = paginate(request, qs)
+    form = AnswerForm(initial={'question': question.pk })
+    return render(request, 'question.html', { 'question': question, 'page': page, 'form': form })
+def ask(request):
+    if request.method == 'POST':
+        form = AskForm(request.POST)
+        if request.user.is_authenticated():
+            form._user = request.user
         if form.is_valid():
-            form.save()
+            q = form.save()
+            return HttpResponseRedirect('/question/' + str(q.pk) + '/')
     else:
-        form = AnswerForm(user, question=question_id)
-    answers = Answer.objects.filter(question=question)
-    c = {"question": question, "answers": answers, "form": form}
-    return render(request, "current_question.html", c)
-
-
-#@login_required
-def ask_question(request):
-    user = request.user
-    if request.method == "POST":
-        text = request.POST["text"]
-        title = request.POST["title"]
-        form = AskForm(user, text=text, title=title)
-        if form.is_valid():
-            question = form.save()
-            url = question.get_url()
-            return HttpResponseRedirect(url)
+        form = AskForm()
+    return render(request, 'ask.html', { 'form': form })
+@require_POST
+def answer(request):
+    form = AnswerForm(request.POST)
+    if request.user.is_authenticated():
+        form._user = request.user
+    if form.is_valid():
+        a = form.save()
+        return HttpResponseRedirect('/question/' + str(a.question.pk) + '/')
     else:
-        form = AskForm(user)
-    c = {"form": form}
-    return render(request, "ask_question.html", c)
-
-
+        return HttpResponseRedirect('/question/' + str(a.question.pk) + '/?err=1')
 def signup(request):
-    if request.method == "POST":
+    if request.method == 'POST':
         form = SignupForm(request.POST)
         if form.is_valid():
-            form.save()
-            user = auth.authenticate(username=request.POST.get("username"), password=request.POST.get("password"))
-            if user is not None and user.is_active:
-                auth.login(request, user)
-                return HttpResponseRedirect("/")
+            user = form.save()
+            auth.login(request, user)
+            return HttpResponseRedirect('/')
     else:
         form = SignupForm()
-    c = {"form": form}
-    return render(request, "signup.html", c)
-
+    return render(request, 'signup.html', { 'form': form })
 
 def login(request):
-    if request.method == "POST":
+    if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
-            user = auth.authenticate(username=request.POST.get("username"), password=request.POST.get("password"))
-            if user is not None and user.is_active:
-                auth.login(request, user)
-                return HttpResponseRedirect("/")
+            user = form.load()
+            auth.login(request, user)
+            return HttpResponseRedirect('/')
     else:
         form = LoginForm()
-    c = {"form": form}
-    return render(request, "signup.html", c)
-
-
-def logout(request):
-    auth.logout(request)
-    return HttpResponseRedirect("/")
+    return render(request, 'login.html', { 'form': form })

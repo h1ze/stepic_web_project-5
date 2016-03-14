@@ -1,16 +1,12 @@
-# -*- coding: utf-8 -*-
+# from wsgiref.simple_server import make_server
 
-"""
+def simple_app(environ, start_response):
+    status = '200 OK'
+    response_headers = [('Content-type', 'text/plain')]
+    start_response(status, response_headers)
+    return [environ['QUERY_STRING'].replace('&', '\n')]
+    # return [u"This is hello wsgi app".encode('utf8')]
 
-"""
-
-
-def application(environ, start_response):
-    status = "200 OK"
-    headers = [("Content-Type", "text/plain")]
-    start_response(status, headers)
-    body = "\n".join(environ["QUERY_STRING"].split("&"))
-    return body
-
-if __name__ == '__main__':
-    pass
+# httpd = make_server('', 8000, simple_app)
+# print "Serving on port 8000..."
+# httpd.serve_forever()
