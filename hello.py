@@ -1,14 +1,16 @@
-def wsgi_app(env, start_response):
+# -*- coding: utf-8 -*-
+
+"""
+
+"""
 
 
-  status = '200 OK'
-  header = [('Content-Type', 'text/plain')]
+def application(environ, start_response):
+    status = "200 OK"
+    headers = [("Content-Type", "text/plain")]
+    start_response(status, headers)
+    body = "\n".join(environ["QUERY_STRING"].split("&"))
+    return body
 
-  body = []
-  for key in env['QUERY_STRING'].split('&'):
-    data = key + "\n"
-    body.append(data)
-
-
-  start_response(status, header)
-  return body
+if __name__ == '__main__':
+    pass
