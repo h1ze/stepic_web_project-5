@@ -6,4 +6,4 @@ mysql -u root -e "CREATE USER 'stepic_web'@'localhost' IDENTIFIED BY 'stepic_web
 mysql -u root -e "GRANT ALL ON stepic_web_db.* TO 'stepic_web'@'localhost';"
 #???
 mysql -u root -e "FLUSH PRIVILEGES;"
-python ./ask/manage.py syncdb
+python /home/box/web/ask/manage.py syncdb
