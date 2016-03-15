@@ -7,6 +7,7 @@ sudo /etc/init.d/gunicorn restart
 sudo mysql -uroot -e "create database stepic_web_db"
 sudo mysql -uroot -e "GRANT ALL PRIVILEGES ON stepic_web_db.* TO 'stepic_web'@'localhost' IDENTIFIED BY 'stepic_web_pass';"
 mysql -u root -e "FLUSH PRIVILEGES;"
+sudo sed -i 's/skip-external-locking/skip-external-locking\ninnodb_use_native_aio = 0/' /etc/mysql/my.cnf
 sudo pip install django-autofixture
 sudo python /home/box/web/ask/manage.py syncdb
 sudo python /home/box/web/ask/manage.py loadtestdata qa.Question:40
