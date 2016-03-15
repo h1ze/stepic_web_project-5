@@ -3,6 +3,8 @@ from django.views.decorators.http import require_GET, require_POST
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.paginator import Paginator, EmptyPage
 from qa.models import *
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.models import User
 from qa.forms import *
 
 
