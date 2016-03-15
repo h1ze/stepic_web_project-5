@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>{{webpage_title}}</title>
+        <title>stepic-web: {{webpage_title}}</title>
         <meta http-equiv=”Content-Type” content=”text/html; charset=utf-8”>
         <meta name=”description” content=”Сайт”>
         <link rel=”stylesheet” href=”./style.css”>
     </head>
     <body id=”the_body”>
+        <h1>{{webpage_title}}</h1>
         {% for question in page.object_list %}
-            <a href="{{ question.get_url }}">{{ question }}</a>
+            <a href="{{ question.get_url }}">{{ question }}</a><br></br>
         {% endfor %}
         <hr></hr>
         <nav>
