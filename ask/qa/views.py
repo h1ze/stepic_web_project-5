@@ -107,6 +107,38 @@ def new_question(request):
 def add_answer(request): #stub for test
     return HttpResponse('OK')
     #return HttpResponse(str(request.POST.get('question', 'X')))
+    
+    
+    
+def signup(request) :
+	if request.method == "POST" :
+		form = SignupForm(request.POST)
+		if form.is_valid() :
+			user = form.save()
+			user = form.loginUser()
+			#user = authenticate(username=request.POST['username'], password=request.POST['password'])
+			login(request, user)
+			return HttpResponseRedirect("/")
+	else :
+		form = SignupForm()
+	return render(request, 'ask_add.html', {
+		'form' : form,
+	})
 
 
+
+def login(request) :
+	if request.method == "POST" :
+		form = LoginForm(request.POST)
+		if form.is_valid() :
+			user = form.loginUser()
+			if user is not None :
+				if user.is_active :
+					login(request, user)
+					return HttpResponseRedirect("/")
+	else :
+		form = LoginForm()
+	return render(request, 'ask_add.html', {
+		'form' : form,
+	})
 
