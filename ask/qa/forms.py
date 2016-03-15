@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from django import forms
 from qa.models import *
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.models import User
 
 class AskForm(forms.Form): #форма добавления вопроса
     title = forms.CharField(max_length=255, min_length=1) #поле заголовка
@@ -50,5 +52,48 @@ class AnswerForm(forms.Form): #форма добавления ответа
     
     def clean(self):
         return self.cleaned_data
+
+
+
+class SignupForm(forms.Form) :
+	username = forms.CharField(max_length=50)
+	email = forms.EmailField(max_length=100)
+	password = forms.CharField(widget=forms.PasswordInput)
+	
+	def clean_username(self) :
+		username = self.cleaned_data['username']
+		return username
+		
+	def clean_email(self) :
+		email = self.cleaned_data['email']
+		return email
+		
+	def clean_password(self) :
+		password = self.cleaned_data['password']
+		
+	def save(self) :
+		user = User.objects.create_user(self.cleaned_data['username'], self.cleaned_data['email'], self.cleaned_data['password'])
+		return user
+	
+	def loginUser(self) :
+		user = authenticate(username=self.cleaned_data['username'], password=self.cleaned_data['password'])
+		return user
+
+
+
+class LoginForm(forms.Form) :
+	username = forms.CharField(max_length=50)
+	password = forms.CharField(widget=forms.PasswordInput)
+	
+	def clean_username(self) :
+		username = self.cleaned_data['username']
+		return username
+		
+	def clean_password(self) :
+		password = self.cleaned_data['password']
+		
+	def loginUser(self) :
+		user = authenticate(username=self.cleaned_data['username'], password=self.cleaned_data['password'])
+		return user
 
 
