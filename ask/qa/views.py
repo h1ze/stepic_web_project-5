@@ -64,14 +64,55 @@ def question_details(request, id):
 
 
 
-@require_GET
-def questions(request):
-    page = paginate(request, Question.objects.order_by('-id'))
-    return render(request, 'questions.html', {
-        'page': page,
-        'baseurl': '/?page=',
-        'webpage_title': 'New questions',
-    })
+def question(request, quest_id) :
+	try :
+		quest = Question.objects.get(id = quest_id)
+	except Question.DoesNotExist :
+		raise Http404
+	answers = Answer.objects.all().filter(question = quest)
+	
+	title = 'qwest ' + quest_id
+	
+	user = request.user
+	
+	if user.is_authenticated() :
+		form = AnswerForm(initial={'question' : quest_id})
+	
+	return render(request, 'question.html', {
+		'title' : title,
+		'question' : quest,
+		'list' : answers,
+		'form' : form,
+	})
+
+def ask(request) :
+	user = request.user
+	if not user.is_authenticated():
+		raise Http404
+	if request.method == "POST" :
+		#print("POST!!!!!!!!!!!!!!!!!!!!!!!!!")
+		form = AskForm(request.POST)
+		if form.is_valid():
+			#print("FORM IS VALID!!!!!!!!!!!!")
+			form.author = user
+			quest = form.save()
+			#print("QUEST IS CREATE!!!!!!!!!!")
+			url = quest.get_absolute_url()
+			#print("URL = " + url +"!!!!!!!!!")
+			return HttpResponseRedirect(url)
+	else :
+		form = AskForm()
+	return render(request, 'ask_add.html', {
+		'form' : form
+	})
+	
+def answer(request) :
+	if request.method == "POST" :
+		form = AnswerForm(request.POST)
+		if form.is_valid():
+			answer = form.save()
+			url = '/question/' + form.question
+			return HttpResponseRedirect(url)
     
     
 
@@ -109,24 +150,6 @@ def add_answer(request): #stub for test
     #return HttpResponse(str(request.POST.get('question', 'X')))
     
     
-    
-def signup(request) :
-	if request.method == "POST" :
-		form = SignupForm(request.POST)
-		if form.is_valid() :
-			user = form.save()
-			user = form.loginUser()
-			#user = authenticate(username=request.POST['username'], password=request.POST['password'])
-			login(request, user)
-			return HttpResponseRedirect("/")
-	else :
-		form = SignupForm()
-	return render(request, 'ask_add.html', {
-		'form' : form,
-	})
-
-
-
 def signup(request) :
 	if request.method == "POST" :
 		form = SignupForm(request.POST)
