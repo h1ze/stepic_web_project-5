@@ -9,10 +9,16 @@ class AskForm(forms.Form): #форма добавления вопроса
     text  = forms.CharField(widget=forms.Textarea, min_length=1) #поле текста вопроса
     
     def save(self):
-        question = Question(**self.cleaned_data)
+        question = Question.objects.create(title=self.cleaned_data['title'], text=self.cleaned_data['text'], author=self.author)
         question.save()
         return question
         #return Question.objects.create(**self.cleaned_data)
+        
+        
+    def clean_title(self):
+	title = self.cleaned_data['title']
+	return title
+
     
     def clean(self):
         return self.cleaned_data
@@ -28,6 +34,7 @@ class AskForm(forms.Form): #форма добавления вопроса
 class AnswerForm(forms.Form): #форма добавления ответа
     text  = forms.CharField(widget=forms.Textarea, min_length=1)
     question = forms.IntegerField(widget=forms.HiddenInput) #поле для связи с вопросом
+    author = 1
     
     def __init__(self, *args, **kwargs):
         self._question = kwargs.pop('_question', None)
@@ -59,6 +66,11 @@ class SignupForm(forms.Form) :
 	username = forms.CharField(max_length=50)
 	email = forms.EmailField(max_length=100)
 	password = forms.CharField(widget=forms.PasswordInput)
+	_pass = ""
+ +	
+ +	def set_password(self, password) :
+ +		self._pass = password
+ +		return password
 	
 	def clean_username(self) :
 		username = self.cleaned_data['username']
@@ -72,11 +84,12 @@ class SignupForm(forms.Form) :
 		password = self.cleaned_data['password']
 		
 	def save(self) :
-		user = User.objects.create_user(self.cleaned_data['username'], self.cleaned_data['email'], self.cleaned_data['password'])
+		user = User.objects.create_user(self.clean_username(), self.clean_email(), self._pass)
 		return user
 	
 	def loginUser(self) :
-		user = authenticate(username=self.cleaned_data['username'], password=self.cleaned_data['password'])
+		user = authenticate(username=self.clean_username(), password=self._pass)
+		login(request, user)
 		return user
 
 
@@ -84,6 +97,11 @@ class SignupForm(forms.Form) :
 class LoginForm(forms.Form) :
 	username = forms.CharField(max_length=50)
 	password = forms.CharField(widget=forms.PasswordInput)
+	_pass = ""
+	
+	def set_password(self, password) :
+		self._pass = password
+		return password
 	
 	def clean_username(self) :
 		username = self.cleaned_data['username']
@@ -93,7 +111,7 @@ class LoginForm(forms.Form) :
 		password = self.cleaned_data['password']
 		
 	def loginUser(self) :
-		user = authenticate(username=self.cleaned_data['username'], password=self.cleaned_data['password'])
+		user = authenticate(username=self.clean_username(), password=self._pass)
 		return user
 
 
