@@ -1,68 +1,63 @@
-from django.shortcuts import render, get_object_or_404
-from django.views.decorators.http import require_GET, require_POST
-from django.http import HttpResponse, HttpResponseRedirect
-from django.core.paginator import Paginator, EmptyPage
-from qa.models import *
+from django.shortcuts import render
+from django.http import HttpResponse, HttpResponseRedirect, Http404
+from qa.models import Question, Answer
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
-from qa.forms import *
+from qa.forms import AskForm, AnswerForm, SignupForm, LoginForm
 
-
-def paginate(request, qs):
-
-    try:
-        limit = int(request.GET.get('limit', 10))
-    except ValueError:
-        limit = 10
-    if limit > 100:
-        limit = 10
-        
-    try:
-        page = int(request.GET.get('page', 1))
-    except ValueError:
-        page = 1 #raise Http404
-        
-    #limit = 10
-    paginator = Paginator(qs, limit)
-    try:
-        page = paginator.page(page)
-    except EmptyPage:
-        page = paginator.page(paginator.num_pages)
-        
-    return page
-
-
-
-@require_GET
 def test(request, *args, **kwargs):
     return HttpResponse('OK')
 
+def index(request) :
+	pageLimit = 10
+	#Entry.objects.order_by(Coalesce('summary', 'headline').desc()) #asc()
+	qwests = Question.objects.all().order_by('-id')
+	
+	from django.core.paginator import Paginator
+	
+	page = request.GET.get('page') or 1
+	try :
+		page = int(page)
+	except ValueError :
+		page = 1
+	paginator = Paginator(qwests, pageLimit)
+	paginator.baseurl = '/?page='
+	try :
+		page = paginator.page(page)
+	except EmptyPage :
+		page = paginator.page(paginator.num_pages)
+	return render(request, 'questionList.html', {
+		'title' : 'qwests and answers',
+		'list' : page.object_list,
+		'paginator' : paginator, 
+		'page' : page,
+	})
+	
 
-
-def question_details(request, id):
-    #if request.method == "POST": 
-        #return add_answer(request)
-    
-    question = get_object_or_404(Question, id=int(id))
-        
-    if request.method == "POST":
-        form = AnswerForm(request.POST, _question=question)
-        if form.is_valid():
-            answer = form.save()
-            url = answer.question.get_url()
-            return HttpResponseRedirect(url)
-    else:
-        form = AnswerForm(initial={'question' : question.id})
-        
-    return render(request, 'question_details.html', {
-        'question': question,
-        'answers': question.answer_set.all(),
-        'form': form,
-        #'POST_url': request.path,
-        'webpage_title': 'Question details',
-    })
-
-
+def popular(request) :
+	pageLimit = 10
+	#Entry.objects.order_by(Coalesce('summary', 'headline').desc()) #asc()
+	qwests = Question.objects.all().order_by('-likes')
+	
+	from django.core.paginator import Paginator
+	
+	page = request.GET.get('page') or 1
+	try :
+		page = int(page)
+	except ValueError :
+		page = 1
+	paginator = Paginator(qwests, pageLimit)
+	paginator.baseurl = '/?page='
+	try :
+		page = paginator.page(page)
+	except EmptyPage :
+		page = paginator.page(paginator.num_pages)
+	return render(request, 'questionList.html', {
+		'title' : 'popular quests',
+		'list' : page.object_list,
+		'paginator' : paginator, 
+		'page' : page,
+	})
 
 def question(request, quest_id) :
 	try :
@@ -113,43 +108,7 @@ def answer(request) :
 			answer = form.save()
 			url = '/question/' + form.question
 			return HttpResponseRedirect(url)
-    
-    
-
-@require_GET    
-def popular_questions(request):
-    page = paginate(request, Question.objects.order_by('-rating'))
-    return render(request, 'questions.html', {
-        'page': page,
-        'baseurl': '/popular/?page=',
-        'webpage_title': 'Popular questions',
-    })    
-
-
-
-def new_question(request):
-    if request.method == "POST":
-        form = AskForm(request.POST)
-        if form.is_valid():
-            #return HttpResponse(str(form.cleaned_data))
-            question = form.save()
-            url = question.get_url()
-            return HttpResponseRedirect(url)
-    else:
-        form = AskForm()
-    return render(request, 'new_question.html', {
-        'form': form,
-        'webpage_title': 'New question',
-    })
-
-
-
-@require_POST
-def add_answer(request): #stub for test
-    return HttpResponse('OK')
-    #return HttpResponse(str(request.POST.get('question', 'X')))
-    
-    
+			
 def signup(request) :
 	if request.method == "POST" :
 		form = SignupForm(request.POST)
@@ -184,4 +143,3 @@ def login(request) :
 	return render(request, 'ask_add.html', {
 		'form' : form,
 	})
-
