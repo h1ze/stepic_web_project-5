@@ -127,15 +127,35 @@ def signup(request) :
 
 
 
+def signup(request) :
+	if request.method == "POST" :
+		form = SignupForm(request.POST)
+		if form.is_valid() :
+			print("POST!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+			print("username: " + request.POST.get("username") + "!")
+			print("password: " + request.POST.get("password") + "!")
+			print("email: " + request.POST.get("email") + "!")
+			form.set_password(request.POST.get("password"))
+			user = form.save()
+			print("SAVE USER!!!!!!!!!!!!!!!!!!!!!!!")
+			print("username: " + user.username + " !")
+			print("password: " + user.password + " !")
+			print("email: " + user.email + " !")
+			form.loginUser(request)
+			return HttpResponseRedirect("/")
+	else :
+		form = SignupForm()
+	return render(request, 'ask_add.html', {
+		'form' : form,
+	})
+	
 def login(request) :
 	if request.method == "POST" :
 		form = LoginForm(request.POST)
 		if form.is_valid() :
-			user = form.loginUser()
-			if user is not None :
-				if user.is_active :
-					login(request, user)
-					return HttpResponseRedirect("/")
+			form.set_password(request.POST.get("password"))
+			user = form.loginUser(request)
+			return HttpResponseRedirect("/")
 	else :
 		form = LoginForm()
 	return render(request, 'ask_add.html', {
